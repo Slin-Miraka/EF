@@ -301,10 +301,11 @@ else:
     cov_mat = returns_df.cov() * N_DAYS
     
     def Efficient_Frontier_Generating():
-        st.subheader("Efficient Frontier Plot")
         progress_bar = st.progress(0)
         status_text = st.empty()
-    
+        
+        
+        
         N_PORTFOLIOS =  1000
         #Calculate annualized average returns and the corresponding standard deviation 
 
@@ -493,7 +494,7 @@ else:
     
         
     
-        
+        st.subheader("Efficient Frontier Plot")
         plot_efficient_frontier()
         progress_bar.progress(100)
         status_text.text("Done")
