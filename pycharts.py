@@ -190,6 +190,8 @@ n_assets = len(returns_df.columns)
 
 if returns_df.empty:
     st.info("Use control panel to select stocks to start. 😊")
+elif length <2:
+    st.error("Input one more ticker please, the portfolio should contain at least two components")
 else:
     st.subheader("Ticker's plots")
     row2_1, row2_2 = st.beta_columns((1,9))
