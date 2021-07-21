@@ -24,7 +24,7 @@ def get_date():
     start_date = st.sidebar.date_input("Start date",datetime.date(2017,12,29))
     end_date = st.sidebar.date_input("End date",today)
     if start_date < end_date:
-        st.sidebar.success('Start date: `%s`\n\nEnd date:`%s`' % (start_date, end_date))
+        st.sidebar.success('Start date: `%s`\n\nEnd date: `%s`' % (start_date, end_date))
     else:
         st.sidebar.error('Error: End date must fall after start date.')
     return start_date, end_date
