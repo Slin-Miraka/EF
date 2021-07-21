@@ -4,11 +4,10 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as sco
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from plotly.validators.scatter.marker import SymbolValidator
 import datetime
 from data_storage import get_list
-
+from scipy.stats import norm
+import akshare as ak
 ########################################################initial settings###################################
 st.set_page_config(
     page_title="Efficient Frontier APP",
@@ -20,9 +19,10 @@ st.set_page_config(
 
 
 def get_date():
+    st.sidebar.subheader("Selecte the date interval")
     today = datetime.date.today()
-    start_date = st.sidebar.date_input("Selecting the Start date",datetime.date(2017,12,29))
-    end_date = st.sidebar.date_input("Selecting the End date",today)
+    start_date = st.sidebar.date_input("Start date",datetime.date(2017,12,29))
+    end_date = st.sidebar.date_input("End date",today)
     if start_date < end_date:
         st.sidebar.success('Start date: `%s`\n\nEnd date:`%s`' % (start_date, end_date))
     else:
@@ -36,6 +36,11 @@ def get_portf_num():
 @st.cache(allow_output_mutation=True)#
 def load_quotes(asset, start, end):
     return yf.download(asset,start, end, adjusted=True)
+
+@st.cache(allow_output_mutation=True)#
+def load_risk_free_rate(start, end):
+    bond_zh_us_rate_df = ak.bond_zh_us_rate()
+    return bond_zh_us_rate_df.query("日期 >= @start  and 日期 < @end")
 
 #2. Define functions for calculating portfolio returns and volatility:
 def get_portf_rtn(w, avg_rtns):
@@ -95,21 +100,34 @@ def plotstocks(df):
     figure.update_layout(height=600,width=1500,
                          xaxis_title='Date'
                         )
+    figure.update_xaxes(
+                rangeslider_visible=True,
+                rangeselector=dict(
+                    buttons=list([
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="YTD", step="year", stepmode="todate"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all")
+                    ])
+                )
+                )
     
     return figure
+
+def IGARCH(y , beta):
+        conditional_var = [np.var(y)]
+        for i in range(1, len(y)):
+            var = beta *  conditional_var[i-1]+ (1-beta) * y[i-1]** 2 
+            conditional_var.append(var)
+        return conditional_var
 ########################################################################################################################
 
 
 author = "Miraka"
 
 
-RF = st.sidebar.number_input(
-                            label="Input Annualized risk-free rate",
-                            min_value=0.00,
-                            value=0.015,
-                            step=0.0001,
-                            format="%.6f",
-                            )
+
 N_DAYS = 252
 
 
@@ -123,6 +141,8 @@ with st.beta_expander(label="Manage stock list", expanded=False):
     RISKY_ASSETS = get_list()
     
     data = load_quotes(RISKY_ASSETS, start=START_DATE,end=END_DATE)['Adj Close']
+    
+    
     length = len(data) 
     all = st.checkbox("Select all to generate Efficient Frontier")
     if all:
@@ -135,6 +155,32 @@ with st.beta_expander(label="Manage stock list", expanded=False):
     select_data = data.loc[:,selected_options]
     st.write("Check the selected data (Retrived data length: {})".format(length))
     st.write(select_data)
+
+st.sidebar.subheader("Setting a proper risk-free proxy")
+bond = st.sidebar.checkbox("Use US Government bond yield")
+if bond:
+    rf_df = load_risk_free_rate(start=START_DATE,end=END_DATE)
+    rf_selection = st.sidebar.selectbox("Select a risk-free proxy",["United States Government Bond 2Y", "United States Government Bond 5Y", "United States Government Bond 10Y","United States Government Bond 30Y"])
+    if rf_selection =="United States Government Bond 2Y":
+        RF = np.mean(rf_df.loc[:,"美国国债收益率2年"])
+    elif rf_selection =="United States Government Bond 5Y":
+        RF = np.mean(rf_df.loc[:,"美国国债收益率5年"])
+    elif rf_selection =="United States Government Bond 10Y":
+        RF = np.mean(rf_df.loc[:,"美国国债收益率10年"])
+    elif rf_selection =="United States Government Bond 30Y":
+        RF = np.mean(rf_df.loc[:,"美国国债收益率30年"])
+    
+else:
+    RF = st.sidebar.number_input(
+                                label="Input Annualized risk-free rate",
+                                min_value=0.00,
+                                value=0.015,
+                                step=0.0001,
+                                format="%.6f",
+                                )
+    RF = RF *100
+    
+st.sidebar.info("Current risk free rate: {:.4f}%".format(RF))
     
 ############################################################SELECTED DATA###################################################
 returns_df = select_data.pct_change().dropna(axis='columns',how = "all") * 100
@@ -431,8 +477,8 @@ else:
                                     ))
         
             fig.update_layout(height=700, width=1500)#, title_text="{} Portforlio Efficient Frontier".format(N_PORTFOLIOS))
-            fig.update_xaxes(title_text="Annualize Volatility (σ)")
-            fig.update_yaxes(title_text="Annualize Expected return")
+            fig.update_xaxes(title_text="Annualize Volatility (%)")
+            fig.update_yaxes(title_text="Annualize Expected return(%)")
             fig.update_layout(legend=dict(
                                 orientation="h",
                                 yanchor="bottom",
@@ -461,7 +507,7 @@ else:
         acc = (returns_df/100 + 1).cumprod()
         
         
-        row3_1,row3_2 = st.beta_columns((3,7))
+        row3_1,row3_2 = st.beta_columns((5,5))
         
         min_vol = pd.DataFrame([*zip(RISKY_ASSETS, np.round(efficient_portfolios[min_vol_ind]['x'],4))],columns=["Tickers","Weights"])
         min_vol = min_vol.set_index("Tickers")
@@ -474,39 +520,105 @@ else:
         max_sharp = max_sharp[(max_sharp.T != 0).any()]
         max_sharp = max_sharp.sort_values(by = "Weights", ascending=False)
         
-        row3_1.subheader("Minimum Volatility portfolio")
-        row3_1.write("**Return:** {:.2f}%  \n   **Volatility:** {:.2f}%  \n   **Sharp ratio:** {:.2f}%".format(min_vol_portf_rtn, min_vol_portf_vol,min_vol_portf_sharp))
-
+        row3_1.subheader("Maximum Sharpe ratio portfolio")
+        row3_1.write("**Return:** {:.2f}%   \n  **Volatility:** {:.2f}%  \n   **Sharpe ratio:** {:.2f}%".format(max_sharp_portf_rtn, max_sharp_portf_vol,max_sharp_portf_sharp))
         row3_1.write("**Weights**")
-        
-        fig_pie1 = go.Figure(data=[go.Pie(labels=min_vol.index, values=min_vol["Weights"], textinfo='label+percent',
-                             insidetextorientation='radial'
-                            )])
+             
+        fig_pie1 = go.Figure(data=[go.Pie(labels=max_sharp.index, values=max_sharp["Weights"], textinfo='label+percent',
+                                     insidetextorientation='radial'
+                                    )])
         fig_pie1.update_layout(height=400, width=500)
         fig_pie1.update_layout(showlegend=False)
         row3_1.plotly_chart(fig_pie1)
-        row3_1.write("")
-        row3_1.write("")
-        row3_1.subheader("Maximum Sharpe ratio portfolio")
-        row3_1.write("**Return:** {:.2f}%   \n  **Volatility:** {:.2f}%  \n   **Sharp ratio:** {:.2f}%".format(max_sharp_portf_rtn, max_sharp_portf_vol,max_sharp_portf_sharp))
-        row3_1.write("**Weights**")
         
+
+        row3_2.subheader("Minimum Volatility portfolio")
+        row3_2.write("**Return:** {:.2f}%  \n   **Volatility:** {:.2f}%  \n   **Sharpe ratio:** {:.2f}%".format(min_vol_portf_rtn, min_vol_portf_vol,min_vol_portf_sharp))
+
+        row3_2.write("**Weights**")
         
-        
-        fig_pie2 = go.Figure(data=[go.Pie(labels=max_sharp.index, values=max_sharp["Weights"], textinfo='label+percent',
-                                     insidetextorientation='radial'
-                                    )])
+        fig_pie2 = go.Figure(data=[go.Pie(labels=min_vol.index, values=min_vol["Weights"], textinfo='label+percent',
+                             insidetextorientation='radial'
+                            )])
         fig_pie2.update_layout(height=400, width=500)
         fig_pie2.update_layout(showlegend=False)
-        row3_1.plotly_chart(fig_pie2)
+        row3_2.plotly_chart(fig_pie2)
+
+
+
         
-        row3_2.subheader("Asset allocation Between Optimized asset and Risk-free asset")
-        row3_2.latex(r'''Y = \frac{E(r_p)-r_f}{A * \sigma_p^2}''')
-        row3_2.markdown("**Where:** A is the risk aversion level of an investor.")
+        st.subheader("Accumulated return of Optimized Portfolios")
+        st.plotly_chart(plotstocks(acc))
+        
+        st.subheader("Risk of Optimized Portfolios")
+        
+        
+
+        
+        fig_risk1 = go.Figure()
+        max_port1 = max_sharpe_.iloc[1:]
+        Conditional_Std_Deviation1 = np.sqrt(IGARCH(max_port1, 0.94))
+        VaR_RM1 = - norm.ppf(0.95)  * Conditional_Std_Deviation1
+        fig_risk1.add_trace(go.Scatter(x=max_port1.index, y=max_port1
+                    ,name='Max Sharpe'
+                    ))
+        fig_risk1.add_trace(go.Scatter(x=max_port1.index, y=VaR_RM1 
+            ,name='95% VaR (Risk Metric)'
+            ))
+        fig_risk1.update_layout(height=600, width=1500, title_text="Max Sharpe Ratio Portfolio")
+        fig_risk1.update_xaxes(
+                        rangeslider_visible=True,
+                        rangeselector=dict(
+                            buttons=list([
+                                dict(count=1, label="1m", step="month", stepmode="backward"),
+                                dict(count=6, label="6m", step="month", stepmode="backward"),
+                                dict(count=1, label="YTD", step="year", stepmode="todate"),
+                                dict(count=1, label="1y", step="year", stepmode="backward"),
+                                dict(step="all")
+                            ])
+                        )
+                        )
+        st.plotly_chart(fig_risk1)
+        
+        
+        fig_risk2 = go.Figure()
+        port2 = min_vol_.iloc[1:]
+        Conditional_Std_Deviation2 = np.sqrt(IGARCH(port2, 0.94))
+        VaR_RM2 = - norm.ppf(0.95)  * Conditional_Std_Deviation2
+        fig_risk2.add_trace(go.Scatter(x=port2.index, y=port2
+                    ,name='Min Variance'
+                    ,line = dict(color='green', width=2)
+                            
+                    ))
+        fig_risk2.add_trace(go.Scatter(x=port2.index, y=VaR_RM2 
+            ,name='95% VaR (Risk Metric)'
+            ))
+        fig_risk2.update_layout(height=600, width=1500, title_text="Min Variance Portfolio")
+        fig_risk2.update_xaxes(
+                        rangeslider_visible=True,
+                        rangeselector=dict(
+                            buttons=list([
+                                dict(count=1, label="1m", step="month", stepmode="backward"),
+                                dict(count=6, label="6m", step="month", stepmode="backward"),
+                                dict(count=1, label="YTD", step="year", stepmode="todate"),
+                                dict(count=1, label="1y", step="year", stepmode="backward"),
+                                dict(step="all")
+                            ])
+                        )
+                        )
+        st.plotly_chart(fig_risk2)
+        
+        
+        
+        st.subheader("Asset allocation Between Optimized asset and Risk-free asset")
+        st.latex(r'''Y = \frac{E(r_p)-r_f}{A * \sigma_p^2}''')
+        st.markdown("**Where:**")
+        st.markdown(" **A** is the risk aversion level of an investor.")
+        st.markdown("**Y** is the total proportion of risky assets.")
         risk_aversion = [1,2,3,4,5]
         Y = []
         for i in risk_aversion:
-            yi = (max_sharp_portf_rtn/100 - RF)/(i * (max_sharp_portf_vol/100)**2)
+            yi = (max_sharp_portf_rtn/100 - RF/100)/(i * (max_sharp_portf_vol/100)**2)
             Y.append(yi)
         rf_weight = [1-j for j in Y]
         max_sharp_ = np.array(max_sharp)
@@ -527,7 +639,7 @@ else:
         for k in range(n_weight):
             fig_bar.add_trace(go.Bar(name=LAMUDA.index[k], x=LAMUDA.columns, y=LAMUDA.iloc[k,:]
                         ))
-        #fig_bar.update_traces(texttemplate='%{Y:.2s}', textposition='outside')         
+       
         fig_bar.update_layout(barmode='stack')
         fig_bar.update_layout(legend=dict(
                             yanchor="top",
@@ -535,22 +647,25 @@ else:
                             xanchor="right",
                             x=0.99
                         ))
-        fig_bar.update_layout(height=500, width=1050)
-        row3_2.subheader("Weights of Risky Asset Allocated")
+        fig_bar.update_layout(height=400, width=800)
+        st.subheader("Weights of Asset Allocation")
         
-        row3_2.table(pd.DataFrame({"Total weights":Y},index =LAMUDA.columns).T)
-        row3_2.plotly_chart(fig_bar)
+        rown1,rown2,rown3 = st.beta_columns((2,5,2))
+        rown2.table(pd.DataFrame({"Weights of Risky Asset Allocated (Y)":Y, "Weights of Risk-free Asset Allocated": rf_weight},index =LAMUDA.columns).T)
+        
         
         fig_bar2 = go.Figure()
         fig_bar2.add_trace(go.Bar(name="Risk free Asset", x=LAMUDA.columns, y=rf_weight)) 
-        fig_bar2.update_layout(height=500, width=1050)
-        row3_2.subheader("Weights of Risk-free Asset Allocated")
+        fig_bar2.update_layout(height=400, width=800)
         
+        
+        row3_1, row3_2 = st.beta_columns(2)
+        row3_1.subheader("Weights of Risky Asset Allocated")
+        row3_1.plotly_chart(fig_bar)
+        row3_2.subheader("Weights of Risk-free Asset Allocated")
         row3_2.plotly_chart(fig_bar2)
         
-        st.subheader("Accumulated return of Optimized Portfolios")
-        st.plotly_chart(plotstocks(acc))
-        
+    
         
     if ef:
         Efficient_Frontier_Generating()
