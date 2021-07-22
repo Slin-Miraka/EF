@@ -407,7 +407,7 @@ else:
     
         #Plot the Efficient Frontier:
         def plot_efficient_frontier():
-    
+            st.subheader("Efficient Frontier Plot")
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=portf_results_df.volatility, y=portf_results_df.returns
                                     ,name="Simulating portfolio"
@@ -494,7 +494,7 @@ else:
     
         
     
-        st.subheader("Efficient Frontier Plot")
+        
         plot_efficient_frontier()
         progress_bar.progress(100)
         status_text.text("Done")
