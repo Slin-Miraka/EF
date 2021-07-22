@@ -160,14 +160,14 @@ st.sidebar.subheader("Setting a proper risk-free proxy")
 bond = st.sidebar.checkbox("Use US Government bond yield")
 if bond:
     rf_df = load_risk_free_rate(start=START_DATE,end=END_DATE)
-    rf_selection = st.sidebar.selectbox("Select a risk-free proxy",["United States Government Bond 2Y", "United States Government Bond 5Y", "United States Government Bond 10Y","United States Government Bond 30Y"])
-    if rf_selection =="United States Government Bond 2Y":
+    rf_selection = st.sidebar.selectbox("Select a risk-free proxy",["US Government Bond 2Y", "US Government Bond 5Y", "US Government Bond 10Y","US Government Bond 30Y"])
+    if rf_selection =="US Government Bond 2Y":
         RF = np.mean(rf_df.loc[:,"美国国债收益率2年"])
-    elif rf_selection =="United States Government Bond 5Y":
+    elif rf_selection =="US Government Bond 5Y":
         RF = np.mean(rf_df.loc[:,"美国国债收益率5年"])
-    elif rf_selection =="United States Government Bond 10Y":
+    elif rf_selection =="US Government Bond 10Y":
         RF = np.mean(rf_df.loc[:,"美国国债收益率10年"])
-    elif rf_selection =="United States Government Bond 30Y":
+    elif rf_selection =="US Government Bond 30Y":
         RF = np.mean(rf_df.loc[:,"美国国债收益率30年"])
     
 else:
