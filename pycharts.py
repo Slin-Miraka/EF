@@ -197,7 +197,7 @@ else:
     row2_1, row2_2 = st.beta_columns((1,9))
     
     initial_plots = row2_1.radio("  ", ["Price plot", "Return plot","Acc Return"])
-    if initial_plots == "Price plot":
+    if initial_plots == "Prices":
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
             fig.add_trace(go.Scatter(x=returns_df.index, y=returns_df
@@ -226,7 +226,7 @@ else:
                         )
         fig.update_layout(xaxis=dict(rangeslider=dict(visible=True)))        
         row2_2.plotly_chart(fig)
-    if initial_plots == "Return plot":
+    if initial_plots == "Returns":
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
             fig.add_trace(go.Scatter(x=returns_df.index, y=returns_df
@@ -256,7 +256,7 @@ else:
         fig.update_layout(xaxis=dict(rangeslider=dict(visible=True)))
                 
         row2_2.plotly_chart(fig)
-    if initial_plots == "Acc Return":
+    if initial_plots == "Acc Returns":
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
             fig.add_trace(go.Scatter(x=returns_df.index, y=returns_df
