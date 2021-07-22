@@ -196,7 +196,7 @@ else:
     st.subheader("Ticker's plots")
     row2_1, row2_2 = st.beta_columns((1,9))
     
-    initial_plots = row2_1.radio("  ", ["Price plot", "Return plot","Acc Return"])
+    initial_plots = row2_1.radio("  ", ["Prices", "Returns","Acc Returns"])
     if initial_plots == "Prices":
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
