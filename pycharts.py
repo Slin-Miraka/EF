@@ -19,7 +19,7 @@ st.set_page_config(
 
 
 def get_date():
-    st.sidebar.subheader("Selecte the date interval")
+    st.sidebar.subheader("Selecte the time interval")
     today = datetime.date.today()
     start_date = st.sidebar.date_input("Start date",datetime.date(2017,12,29))
     end_date = st.sidebar.date_input("End date",today)
