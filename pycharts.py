@@ -439,8 +439,8 @@ else:
                                , index =index_ )
         
         risk_aversion_df = pd.DataFrame({"Weights of Risky Asset Allocated (Y)":Y, "Weights of Risk-free Asset Allocated": rf_weight},index =LAMUDA.columns)
-        risk_aversion_df["Expected return"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_rtn + risk_aversion_df["Weights of Risk-free Asset Allocated"] * RF
-        risk_aversion_df["Volatility"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_vol
+        risk_aversion_df["Expected return (%)"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_rtn + risk_aversion_df["Weights of Risk-free Asset Allocated"] * RF
+        risk_aversion_df["Volatility (%)"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_vol
         risk_aversion_df["Sharpe Ratio"] = (risk_aversion_df["Expected return"] - RF)/risk_aversion_df["Volatility"]
         
         n_weight = len(LAMUDA)
@@ -564,7 +564,7 @@ else:
 
         
         row3_1.subheader("Maximum Sharpe ratio portfolio")
-        row3_1.write("**Return:** {:.2f}%   \n  **Volatility:** {:.2f}%  \n   **Sharpe ratio:** {:.2f}%".format(max_sharp_portf_rtn, max_sharp_portf_vol,max_sharp_portf_sharp))
+        row3_1.write("**Return:** {:.4f}%   \n  **Volatility:** {:.4f}%  \n   **Sharpe ratio:** {:.4f}".format(max_sharp_portf_rtn, max_sharp_portf_vol,max_sharp_portf_sharp))
         row3_1.write("**Weights**")
              
         fig_pie1 = go.Figure(data=[go.Pie(labels=max_sharp.index, values=max_sharp["Weights"], textinfo='label+percent',
@@ -576,7 +576,7 @@ else:
         
 
         row3_2.subheader("Minimum Volatility portfolio")
-        row3_2.write("**Return:** {:.2f}%  \n   **Volatility:** {:.2f}%  \n   **Sharpe ratio:** {:.2f}%".format(min_vol_portf_rtn, min_vol_portf_vol,min_vol_portf_sharp))
+        row3_2.write("**Return:** {:.4f}%  \n   **Volatility:** {:.4f}%  \n   **Sharpe ratio:** {:.4f}".format(min_vol_portf_rtn, min_vol_portf_vol,min_vol_portf_sharp))
 
         row3_2.write("**Weights**")
         
