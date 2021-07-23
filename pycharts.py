@@ -451,6 +451,23 @@ else:
         def plot_efficient_frontier():
             st.subheader("Efficient Frontier Plot")
             fig = go.Figure()
+            fig.add_trace(go.Scatter(x=vols_range, y=rtns_range
+                        ,name="Efficient Frontier"
+                        ,mode="lines"
+                        ,opacity=1
+                        ,marker=dict(size=2
+                                    ,color = 1
+                                    ,line=dict(width=1
+                                            ,color = 1
+                                                )
+                                    )
+                        ))
+            fig.add_trace(go.Scatter(x=af['sigma'] , y=af['sml']
+                ,name="Capital Allocation line"
+                ,mode="lines"
+                ,opacity=1
+                ,line = dict(color='firebrick', width=4, dash='dot')
+                ))
             fig.add_trace(go.Scatter(x=portf_results_df.volatility, y=portf_results_df.returns
                                     ,name="Simulating portfolio"
                                     ,mode="markers"
@@ -463,12 +480,7 @@ else:
                                                             )
                                                 )
                                     ))
-            fig.add_trace(go.Scatter(x=af['sigma'] , y=af['sml']
-                            ,name="Capital Allocation line"
-                            ,mode="lines"
-                            ,opacity=1
-                            ,line = dict(color='firebrick', width=4, dash='dot')
-                            ))
+
             fig.add_trace(go.Scatter(x= [0], y=[RF]
                     ,name="Risk-free asset"
                     ,mode="markers"
@@ -481,17 +493,7 @@ else:
                                             )
                                 )
                     ))
-            fig.add_trace(go.Scatter(x=vols_range, y=rtns_range
-                                    ,name="Efficient Frontier"
-                                    ,mode="lines"
-                                    ,opacity=1
-                                    ,marker=dict(size=2
-                                                ,color = 1
-                                                ,line=dict(width=1
-                                                        ,color = 1
-                                                            )
-                                                )
-                                    ))
+
         
             fig.add_trace(go.Scatter(x=np.sqrt(returns_df.var() * N_DAYS), y=avg_returns 
                                     ,name="Indivial Stock"
