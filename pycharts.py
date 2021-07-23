@@ -673,7 +673,7 @@ else:
                             x=0.99
                         ))
         fig_bar.update_layout(height=400, width=800)
-        st.subheader("Weights of Asset Allocation")
+        st.subheader("Risk Aversion Assets")
         
         rown1,rown2,rown3 = st.beta_columns((2,5,2))
         rown2.table(risk_aversion_df.T)
