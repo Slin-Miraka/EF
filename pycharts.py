@@ -352,7 +352,7 @@ else:
         
         max_vol_ind = np.argmax(portf_results_df.volatility)
         max_vol_portf_rtn = portf_results_df.iloc[max_vol_ind,:]
-        range_for_cal = round(max_vol_portf_rtn[1]+0.1,1)
+        range_for_cal = round(max_vol_portf_rtn[1]+1,1)
         range_for_cal = range_for_cal *10000
         progress_bar.progress(40)
         status_text.text("Defining boundaries")
