@@ -441,7 +441,7 @@ else:
         risk_aversion_df = pd.DataFrame({"Weights of Risky Asset Allocated (Y)":Y, "Weights of Risk-free Asset Allocated": rf_weight},index =LAMUDA.columns)
         risk_aversion_df["Expected return (%)"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_rtn + risk_aversion_df["Weights of Risk-free Asset Allocated"] * RF
         risk_aversion_df["Volatility (%)"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_vol
-        risk_aversion_df["Sharpe Ratio"] = (risk_aversion_df["Expected return"] - RF)/risk_aversion_df["Volatility"]
+        risk_aversion_df["Sharpe Ratio"] = (risk_aversion_df["Expected return (%)"] - RF)/risk_aversion_df["Volatility (%)"]
         
         n_weight = len(LAMUDA)
     
