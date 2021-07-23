@@ -349,7 +349,6 @@ else:
         
         min_vol_ind = np.argmin(portf_results_df.volatility)
         min_vol_portf_rtn = portf_results_df.iloc[min_vol_ind,:]
-        otm_ret = round(min_vol_portf_rtn[0],1)
         
         max_vol_ind = np.argmax(portf_results_df.volatility)
         max_vol_portf_rtn = portf_results_df.iloc[max_vol_ind,:]
@@ -402,6 +401,49 @@ else:
         af['sml'] = af['sigma'] * slope + RF
         progress_bar.progress(80)
         status_text.text("Calculating Security Market line")
+        
+        max_sharpe_ = returns_df @ efficient_portfolios[max_sharp_ind]['x'] 
+        min_vol_ = returns_df @ efficient_portfolios[min_vol_ind]['x']
+        equal_weight = returns_df.mean(axis = 1)
+        returns_df['Max Sharpe'] = max_sharpe_
+        returns_df['Min Variance'] = min_vol_
+        returns_df['Equal Weight'] = equal_weight
+        
+        acc = (returns_df/100 + 1).cumprod()
+        
+        min_vol = pd.DataFrame([*zip(RISKY_ASSETS, np.round(efficient_portfolios[min_vol_ind]['x'],4))],columns=["Tickers","Weights"])
+        min_vol = min_vol.set_index("Tickers")
+        min_vol = min_vol[(min_vol.T != 0).any()]
+        min_vol = min_vol.sort_values(by = "Weights", ascending=False)
+        
+        
+        max_sharp = pd.DataFrame([*zip(RISKY_ASSETS, np.round(efficient_portfolios[max_sharp_ind]['x'],4))],columns=["Tickers","Weights"])
+        max_sharp = max_sharp.set_index("Tickers")
+        max_sharp = max_sharp[(max_sharp.T != 0).any()]
+        max_sharp = max_sharp.sort_values(by = "Weights", ascending=False)
+        
+        risk_aversion = [1,2,3,4,5]
+        Y = []
+        for i in risk_aversion:
+            yi = (max_sharp_portf_rtn/100 - RF/100)/(i * (max_sharp_portf_vol/100)**2)
+            Y.append(yi)
+        rf_weight = [1-j for j in Y]
+        max_sharp_ = np.array(max_sharp)
+        index_ = max_sharp.index
+       
+        LAMUDA = pd.DataFrame({ "A = 1":max_sharp_.flatten()*Y[0]
+                               ,"A = 2":max_sharp_.flatten()*Y[1]
+                               ,"A = 3":max_sharp_.flatten()*Y[2]
+                               ,"A = 4":max_sharp_.flatten()*Y[3]
+                               ,"A = 5":max_sharp_.flatten()*Y[4]}
+                               , index =index_ )
+        
+        risk_aversion_df = pd.DataFrame({"Weights of Risky Asset Allocated (Y)":Y, "Weights of Risk-free Asset Allocated": rf_weight},index =LAMUDA.columns)
+        risk_aversion_df["Expected return"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_rtn + risk_aversion_df["Weights of Risk-free Asset Allocated"] * RF
+        risk_aversion_df["Volatility"] = risk_aversion_df["Weights of Risky Asset Allocated (Y)"] * max_sharp_portf_vol
+        risk_aversion_df["Sharpe Ratio"] = (risk_aversion_df["Expected return"] - RF)/risk_aversion_df["Volatility"]
+        
+        n_weight = len(LAMUDA)
     
     
     
@@ -466,9 +508,9 @@ else:
                                     ))
         
             fig.add_trace(go.Scatter(x=[min_vol_portf_vol,max_sharp_portf_vol], y=[min_vol_portf_rtn,max_sharp_portf_rtn]
-                                    ,name="Special portfolios"
+                                    ,name="Optimized portfolios"
                                     ,mode="markers"
-                                    ,marker_symbol=[204,22]
+                                    ,marker_symbol=204
                                     ,text = ["Minimum variance portfolio","Maximum sharp ratio porfolio"]
                                     ,opacity=1
                                     ,marker=dict(size=10
@@ -478,6 +520,19 @@ else:
                                                             )
                                                 )
                                     ))
+            fig.add_trace(go.Scatter(x=risk_aversion_df.iloc[3:5,3], y=risk_aversion_df.iloc[3:5,2]
+                        ,name="Risk-aversion portfolios"
+                        ,mode="markers"
+                        ,marker_symbol=22
+                        ,text = ["A = 4","A = 5"]
+                        ,opacity=1
+                        ,marker=dict(size=10
+                                    ,colorscale='Viridis'
+                                    ,color = "blue"
+                                    ,line=dict(width=1
+                                                )
+                                    )
+                        ))
         
             fig.update_layout(height=700, width=1500)#, title_text="{} Portforlio Efficient Frontier".format(N_PORTFOLIOS))
             fig.update_xaxes(title_text="Annualize Volatility (%)")
@@ -500,28 +555,11 @@ else:
         status_text.text("Done")
         st.balloons()
         
-        max_sharpe_ = returns_df @ efficient_portfolios[max_sharp_ind]['x'] 
-        min_vol_ = returns_df @ efficient_portfolios[min_vol_ind]['x']
-        equal_weight = returns_df.mean(axis = 1)
-        returns_df['Max Sharpe'] = max_sharpe_
-        returns_df['Min Variance'] = min_vol_
-        returns_df['Equal Weight'] = equal_weight
-        
-        acc = (returns_df/100 + 1).cumprod()
         
         
         row3_1,row3_2 = st.beta_columns((5,5))
         
-        min_vol = pd.DataFrame([*zip(RISKY_ASSETS, np.round(efficient_portfolios[min_vol_ind]['x'],4))],columns=["Tickers","Weights"])
-        min_vol = min_vol.set_index("Tickers")
-        min_vol = min_vol[(min_vol.T != 0).any()]
-        min_vol = min_vol.sort_values(by = "Weights", ascending=False)
-        
-        
-        max_sharp = pd.DataFrame([*zip(RISKY_ASSETS, np.round(efficient_portfolios[max_sharp_ind]['x'],4))],columns=["Tickers","Weights"])
-        max_sharp = max_sharp.set_index("Tickers")
-        max_sharp = max_sharp[(max_sharp.T != 0).any()]
-        max_sharp = max_sharp.sort_values(by = "Weights", ascending=False)
+
         
         row3_1.subheader("Maximum Sharpe ratio portfolio")
         row3_1.write("**Return:** {:.2f}%   \n  **Volatility:** {:.2f}%  \n   **Sharpe ratio:** {:.2f}%".format(max_sharp_portf_rtn, max_sharp_portf_vol,max_sharp_portf_sharp))
@@ -618,25 +656,7 @@ else:
         st.markdown("**Where:**")
         st.markdown(" **A** is the risk aversion level of an investor.")
         st.markdown("**Y** is the total proportion of risky assets.")
-        risk_aversion = [1,2,3,4,5]
-        Y = []
-        for i in risk_aversion:
-            yi = (max_sharp_portf_rtn/100 - RF/100)/(i * (max_sharp_portf_vol/100)**2)
-            Y.append(yi)
-        rf_weight = [1-j for j in Y]
-        max_sharp_ = np.array(max_sharp)
-        index_ = max_sharp.index
-       
-        LAMUDA = pd.DataFrame({ "A = 1":max_sharp_.flatten()*Y[0]
-                               ,"A = 2":max_sharp_.flatten()*Y[1]
-                               ,"A = 3":max_sharp_.flatten()*Y[2]
-                               ,"A = 4":max_sharp_.flatten()*Y[3]
-                               ,"A = 5":max_sharp_.flatten()*Y[4]}
-                               , index =index_ )
-            
 
-        
-        n_weight = len(LAMUDA)
 
         fig_bar = go.Figure()
         for k in range(n_weight):
@@ -654,7 +674,7 @@ else:
         st.subheader("Weights of Asset Allocation")
         
         rown1,rown2,rown3 = st.beta_columns((2,5,2))
-        rown2.table(pd.DataFrame({"Weights of Risky Asset Allocated (Y)":Y, "Weights of Risk-free Asset Allocated": rf_weight},index =LAMUDA.columns).T)
+        rown2.table(risk_aversion_df.T)
         
         
         fig_bar2 = go.Figure()
@@ -667,8 +687,7 @@ else:
         row3_1.plotly_chart(fig_bar)
         row3_2.subheader("Weights of Risk-free Asset Allocated")
         row3_2.plotly_chart(fig_bar2)
-        
-    
+
         
     if ef:
         Efficient_Frontier_Generating()
