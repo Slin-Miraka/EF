@@ -194,10 +194,12 @@ elif length <2:
     st.error("Input one more ticker please, the portfolio should contain at least two components")
 else:
     st.subheader("Ticker's plots")
-    row2_1, row2_2 = st.beta_columns((1,9))
+    row2_1, row2_2,row2_3 = st.beta_columns(3)
     
-    initial_plots = row2_1.radio("  ", ["Prices plot", "Returns plot","Acc-Returns"])
-    if initial_plots == "Prices plot":
+    initial_plots1 = row2_1.radio("  ", ["Prices plot"])
+    initial_plots2 = row2_2.radio("  ", ["Returns plot"])
+    initial_plots3 = row2_3.radio("  ", ["Acc-Returns"])
+    if initial_plots1:
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
             fig.add_trace(go.Scatter(x=returns_df.index, y=returns_df
@@ -225,8 +227,8 @@ else:
                         )
                         )
         fig.update_layout(xaxis=dict(rangeslider=dict(visible=True)))        
-        row2_2.plotly_chart(fig)
-    if initial_plots == "Returns plot":
+        st.plotly_chart(fig)
+    if initial_plots2:
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
             fig.add_trace(go.Scatter(x=returns_df.index, y=returns_df
@@ -255,8 +257,8 @@ else:
                 )
         fig.update_layout(xaxis=dict(rangeslider=dict(visible=True)))
                 
-        row2_2.plotly_chart(fig)
-    if initial_plots == "Acc-Returns":
+        st.plotly_chart(fig)
+    if initial_plots3:
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
             fig.add_trace(go.Scatter(x=returns_df.index, y=returns_df
@@ -285,7 +287,7 @@ else:
                 )
         fig.update_layout(xaxis=dict(rangeslider=dict(visible=True)))
                 
-        row2_2.plotly_chart(fig)
+        st.plotly_chart(fig)
     with st.beta_expander(label="View the returns' summary", expanded=False):
         summary = pd.DataFrame(returns_df.agg({'count','min','median','mean','max','var','std','skew','kurt'})).T
         summary["Missing num"] = num_missing
