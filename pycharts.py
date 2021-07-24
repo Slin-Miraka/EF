@@ -196,9 +196,9 @@ else:
     st.subheader("Ticker's plots")
     row2_1, row2_2,row2_3 = st.beta_columns(3)
     
-    initial_plots1 = row2_1.checkbox("Prices plot")
-    initial_plots2 = row2_2.radio("  ", ["Returns plot"])
-    initial_plots3 = row2_3.radio("  ", ["Acc-Returns"])
+    initial_plots1 = row2_1.checkbox("Stock Prices Plot")
+    initial_plots2 = row2_2.checkbox("Stock Returns Plot")
+    initial_plots3 = row2_3.checkbox("Accumulated Returns Plot")
     if initial_plots1:
         fig = go.Figure()
         if isinstance(returns_df, pd.Series) == True:
