@@ -196,7 +196,7 @@ else:
     st.subheader("Ticker's plots")
     row2_1, row2_2,row2_3 = st.beta_columns(3)
     
-    initial_plots1 = row2_1.radio("  ", ["Prices plot"])
+    initial_plots1 = row2_1.checkbox("Prices plot")
     initial_plots2 = row2_2.radio("  ", ["Returns plot"])
     initial_plots3 = row2_3.radio("  ", ["Acc-Returns"])
     if initial_plots1:
