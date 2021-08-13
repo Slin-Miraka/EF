@@ -136,7 +136,7 @@ N_DAYS = 252
 st.title("Efficient Frontier APP")
 st.write("Edit by: ",author)
 st.subheader("Stock list control panel")
-with st.beta_expander(label="Manage stock list", expanded=False):
+with st.expander(label="Manage stock list", expanded=False):
     START_DATE,END_DATE = get_date()
     RISKY_ASSETS = get_list()
     
@@ -194,7 +194,7 @@ elif length <2:
     st.error("Input one more ticker please, the portfolio should contain at least two components")
 else:
     st.subheader("Ticker's plots")
-    row2_1, row2_2,row2_3 = st.beta_columns(3)
+    row2_1, row2_2,row2_3 = st.columns(3)
     
     initial_plots1 = row2_1.checkbox("Stock Prices Plot",1)
     initial_plots2 = row2_2.checkbox("Stock Returns Plot")
@@ -288,7 +288,7 @@ else:
         fig.update_layout(xaxis=dict(rangeslider=dict(visible=True)))
                 
         st.plotly_chart(fig)
-    with st.beta_expander(label="View the returns' summary", expanded=False):
+    with st.expander(label="View the returns' summary", expanded=False):
         summary = pd.DataFrame(returns_df.agg({'count','min','median','mean','max','var','std','skew','kurt'})).T
         summary["Missing num"] = num_missing
         summary = summary[['count',"Missing num",'min','median','mean','max','var','std','skew','kurt']]
@@ -561,7 +561,7 @@ else:
         
         
         
-        row3_1,row3_2 = st.beta_columns((5,5))
+        row3_1,row3_2 = st.columns((5,5))
         
 
         
@@ -677,7 +677,7 @@ else:
         fig_bar.update_layout(height=400, width=800)
         st.subheader("Risk Aversion Assets")
         
-        rown1,rown2,rown3 = st.beta_columns((2,5,2))
+        rown1,rown2,rown3 = st.columns((2,5,2))
         rown2.table(risk_aversion_df.T)
         
         
@@ -686,7 +686,7 @@ else:
         fig_bar2.update_layout(height=400, width=800)
         
         
-        row3_1, row3_2 = st.beta_columns(2)
+        row3_1, row3_2 = st.columns(2)
         row3_1.subheader("Weights of Risky Asset Allocated")
         row3_1.plotly_chart(fig_bar)
         row3_2.subheader("Weights of Risk-free Asset Allocated")
