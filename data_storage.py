@@ -13,7 +13,7 @@ FEMALE10 = ["ORCL","GSK","ACN","BBY","GM","ANTM","UPS","GD","PGR","NOC"]
 
 
 def get_list():
-    row1_1, row1_2, row1_3 = st.beta_columns((3,2,2))
+    row1_1, row1_2, row1_3 = st.columns((3,2,2))
     row1_3.write("Customized Portfolios")
     select = row1_3.radio("",["Customized portfolio 1", "Customized portfolio 2","Customized portfolio 3","Sample Portfolios"])
     #row1_3.write("Sample Portfolios")
